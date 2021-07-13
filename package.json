@@ -4,6 +4,7 @@
   "description": "Fast and Secured OAuth 2.0 Server with OIDC",
   "main": "src/index.js",
   "scripts": {
+    "preview": "node src/app_preview.js",
     "test": "jest unit",
     "prettier:check": "prettier --check ./{src,unit_test}/**/*.{js,json} --no-error-on-unmatched-pattern",
     "lint": "eslint src/** unit_test/** --no-error-on-unmatched-pattern"
