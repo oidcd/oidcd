@@ -27,11 +27,14 @@
   "homepage": "https://github.com/yugusec/oidcd#readme",
   "devDependencies": {
     "eslint": "^7.30.0",
+    "eslint-plugin-node": "^11.1.0",
     "jest": "^27.0.6",
     "prettier": "^2.3.2"
   },
   "dependencies": {
     "express": "^4.17.1",
-    "jose": "^3.14.0"
+    "express-validator": "^6.12.0",
+    "jose": "^3.14.0",
+    "validator": "^13.6.0"
   }
 }
