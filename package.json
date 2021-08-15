@@ -2,7 +2,7 @@
   "name": "oidcd",
   "version": "0.1.1",
   "description": "Fast and Secured OAuth 2.0 Server with OIDC",
-  "main": "src/index.js",
+  "main": "src/oidcd.js",
   "scripts": {
     "preview": "node src/app_preview.js",
     "test": "jest unit",
@@ -32,9 +32,11 @@
     "prettier": "^2.3.2"
   },
   "dependencies": {
+    "debug": "^4.3.2",
     "express": "^4.17.1",
     "express-validator": "^6.12.0",
     "jose": "^3.14.0",
+    "lodash": "^4.17.21",
     "validator": "^13.6.0"
   }
 }
