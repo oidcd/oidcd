@@ -1,12 +1,7 @@
 "use strict";
 
 const unixTimestamp = require("../utils/unix_timestamp");
-const {
-  grantIdKeyPrefix,
-  grantSessionUidKeyPrefix,
-  grantUserCodeKeyPrefix,
-  grantable,
-} = require("../constant/grant");
+const grantConstant = require("../constant/grant");
 
 let storage = null;
 
@@ -23,14 +18,14 @@ module.exports = class Store {
   }
 
   grantIdKey(id) {
-    return `${grantIdKeyPrefix}:${id}`;
+    return `${grantConstant.GRANT_ID_KEY_PREFIX}:${id}`;
   }
   sessionUidKey(uid) {
-    return `${grantSessionUidKeyPrefix}:${uid}`;
+    return `${grantConstant.GRANT_SESSION_UID_KEY_PREFIX}:${uid}`;
   }
 
   userCodeKey(userCode) {
-    return `${grantUserCodeKeyPrefix}:${userCode}`;
+    return `${grantConstant.GRANT_USER_CODE_KEY_PREFIX}:${userCode}`;
   }
 
   async destroy(id) {
@@ -64,7 +59,7 @@ module.exports = class Store {
     }
 
     const { grantId, userCode } = payload;
-    if (grantable.has(this.name) && grantId) {
+    if (grantConstant.GRANTABLE.has(this.name) && grantId) {
       const grantKey = this.grantIdKey(grantId);
       const grant = storage.get(grantKey);
       if (!grant) {

@@ -1,17 +1,17 @@
 "use strict";
 
 module.exports = Object.freeze({
-  grantIdKeyPrefix: "oidc:grant:",
-  grantSessionUidKeyPrefix: "oidc:sessionUid:",
-  grantUserCodeKeyPrefix: "oidc:userCode:",
-  grantable: new Set([
+  GRANT_ID_KEY_PREFIX: "oidc:grant:",
+  GRANT_SESSION_UID_KEY_PREFIX: "oidc:sessionUid:",
+  GRANT_USER_CODE_KEY_PREFIX: "oidc:userCode:",
+  GRANTABLE: new Set([
     "AccessToken",
     "AuthorizationCode",
     "RefreshToken",
     "DeviceCode",
     "BackchannelAuthenticationRequest",
   ]),
-  grantParameterList: [
+  GRANT_PARAMETER_LIST: [
     "acr_values", // TODO:
     // 'claims', // added conditionally depending on feature flag
     "claims_locales", // TODO: store claimsLocales on AccessToken instances
