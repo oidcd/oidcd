@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yugusec/oidcd.git"
+    "url": "git+https://github.com/leyusec/oidcd.git"
   },
   "keywords": [
     "oauth2",
@@ -25,9 +25,9 @@
   "author": "McGrady Chen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yugusec/oidcd/issues"
+    "url": "https://github.com/leyusec/oidcd/issues"
   },
-  "homepage": "https://github.com/yugusec/oidcd#readme",
+  "homepage": "https://github.com/leyusec/oidcd#readme",
   "devDependencies": {
     "eslint": "^7.30.0",
     "eslint-plugin-import": "^2.24.1",
