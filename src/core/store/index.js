@@ -1,6 +1,6 @@
 "use strict";
 
-const unixTimestamp = require("../utils/unix_timestamp");
+const unixTimestamp = require("../util/unix_timestamp");
 const grantConstant = require("../constant/grant");
 
 let storage = null;

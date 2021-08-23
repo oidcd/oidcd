@@ -40,6 +40,11 @@ const generateOIDCCoreError = (
 
 module.exports = {
   OIDCCoreError,
+  InvalidJWT: generateOIDCCoreError(
+    "InvalidJWT",
+    snakeCase("InvalidJWT").toLowerCase(),
+    400
+  ),
   UnknownOIDCCoreError: generateOIDCCoreError(
     "UnknownOIDCCoreError",
     snakeCase("UnknownOIDCCoreError").toLowerCase(),
