@@ -4,7 +4,9 @@ const { CompactEncrypt } = require("jose/dist/node/cjs/jwe/compact/encrypt");
 const { CompactSign } = require("jose/dist/node/cjs/jws/compact/sign");
 const { compactDecrypt } = require("jose/dist/node/cjs/jwe/compact/decrypt");
 const { compactVerify } = require("jose/dist/node/cjs/jws/compact/verify");
-const { decodeProtectedHeader } = require("jose/dist/node/cjs/util/decode_protected_header");
+const {
+  decodeProtectedHeader,
+} = require("jose/dist/node/cjs/util/decode_protected_header");
 const {
   JWEDecryptionFailed,
   JWKSNoMatchingKey,
@@ -37,7 +39,7 @@ function verifyAudience({ aud, azp }, expected, checkAzp) {
     }
   } else {
     if (aud !== expected) {
-      throw new InvalidJWT("invalid jwt audience");
+      throw new InvalidJWT(`jwt audience missing ${expected}`);
     }
   }
 }
@@ -228,7 +230,11 @@ class JWT {
         throw new JWSSignatureVerificationFailed();
       }
     } catch (err) {
-      if (typeof keystore.fresh !== "function" || keystore.fresh()) {
+      if (
+        !keystore ||
+        typeof keystore.fresh !== "function" ||
+        keystore.fresh()
+      ) {
         throw err;
       }
 

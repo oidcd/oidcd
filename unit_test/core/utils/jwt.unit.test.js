@@ -9,20 +9,32 @@ const JWT = require("../../../src/core/util/jwt");
 const unixTimestamp = require("../../../src/core/util/unix_timestamp");
 const KeyStore = require("../../../src/core/util/key_store");
 
-const ks = new KeyStore();
+const ks = new Map();
 
 /* eslint-env jest */
 
 describe("JSON Web Token (JWT) RFC7519 implementation", () => {
-  beforeAll(() => {
-    const octKey = generateSecret("HS512");
-    const rsaKeyPair = generateKeyPair("RSA-OAEP", { modulusLength: 2048 });
-    const ecKeyPair = generateKeyPair("ECDH-ES", { crv: "P-256" });
-    const okpKeyPair = generateKeyPair("EdDSA", { crv: "Ed25519" });
-    ks.add(fromKeyLike(octKey));
-    ks.add(fromKeyLike(rsaKeyPair));
-    ks.add(fromKeyLike(ecKeyPair));
-    ks.add(fromKeyLike(okpKeyPair));
+  beforeAll(async () => {
+    const octKey = await generateSecret("HS512");
+    const rsaKeyPair = await generateKeyPair("RSA-OAEP", {
+      modulusLength: 2048,
+    });
+    const ecKeyPair = await generateKeyPair("ECDH-ES", { crv: "P-256" });
+    // const okpKeyPair = await generateKeyPair("EdDSA", { crv: "Ed25519" });
+    ks.set("oct", {
+      keyObject: octKey,
+      jwk: await fromKeyLike(octKey),
+    });
+
+    ks.set("RSA", {
+      keyObject: rsaKeyPair.privateKey,
+      jwk: await fromKeyLike(rsaKeyPair.privateKey),
+    });
+
+    ks.set("EC", {
+      keyObject: ecKeyPair.privateKey,
+      jwk: await fromKeyLike(ecKeyPair.privateKey),
+    });
   });
 
   describe(".decode()", () => {
@@ -39,83 +51,74 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     JWT.sign({ data: true }, null, "none")
       .then((jwt) => JWT.decode(jwt))
       .then((decoded) => {
-        expect(decoded.header).not.to.have.property("kid");
-        expect(decoded.header).to.have.property("alg", "none");
-        expect(decoded.payload).to.contain({ data: true });
+        expect(decoded.header).not.toHaveProperty("kid");
+        expect(decoded.header).toHaveProperty("alg", "none");
+        expect(decoded.payload).toHaveProperty("data", true);
       }));
 
-  it("does not verify none", () =>
+  it("does not verify none", () => {
+    const validated = jest.fn();
     JWT.sign({ data: true }, null, "none")
       .then((jwt) => JWT.verify(jwt))
-      .then(
-        (valid) => {
-          expect(valid).not.to.be.ok;
-        },
-        (err) => {
-          expect(err).to.be.ok;
-        }
-      ));
+      .then(validated, (err) => {
+        expect(err).toBeTruthy();
+        expect(validated).not.toHaveBeenCalled();
+      });
+  });
 
-  it("does not verify none with a key", () =>
+  it("does not verify none with a key", () => {
+    const validated = jest.fn();
     JWT.sign({ data: true }, null, "none")
       .then((jwt) =>
         JWT.verify(jwt, new KeyStore([ks.get({ kty: "oct" }).toJWK(true)]))
       )
-      .then(
-        (valid) => {
-          expect(valid).not.to.be.ok;
-        },
-        (err) => {
-          expect(err).to.be.ok;
-        }
-      ));
+      .then(validated, (err) => {
+        expect(err).toBeTruthy();
+        expect(validated).not.toHaveBeenCalled();
+      });
+  });
 
   it("signs and validates with oct", () => {
-    const key = ks.get({ kty: "oct" });
-    const keyobject = key.keyObject;
-    const jwk = key.toJWK(true);
+    const { keyObject: keyobject, jwk } = ks.get("oct");
     delete jwk.kid;
-    return JWT.sign({ data: true }, keyobject, "HS256")
+    JWT.sign({ data: true }, keyobject, "HS256")
       .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
       .then((decoded) => {
-        expect(decoded.header).not.to.have.property("kid");
-        expect(decoded.header).to.have.property("alg", "HS256");
-        expect(decoded.payload).to.contain({ data: true });
+        expect(decoded.header).not.toHaveProperty("kid");
+        expect(decoded.header).toHaveProperty("alg", "HS256");
+        expect(decoded.payload).toHaveProperty("data", true);
       });
   });
 
   it("handles utf8 characters", () => {
-    const key = ks.get({ kty: "oct" });
-    const keyobject = key.keyObject;
+    const { keyObject: keyobject } = ks.get("oct");
 
-    return JWT.sign({ "ś∂źć√": "ś∂źć√" }, keyobject, "HS256")
+    JWT.sign({ "ś∂źć√": "ś∂źć√" }, keyobject, "HS256")
       .then((jwt) => JWT.decode(jwt))
       .then((decoded) => {
-        expect(decoded.payload).to.contain({ "ś∂źć√": "ś∂źć√" });
+        expect(decoded.payload).toHaveProperty("ś∂źć√", "ś∂źć√");
       });
   });
 
   it("signs and validates with RSA", () => {
-    const key = ks.get({ kty: "RSA" });
-    const keyobject = key.keyObject;
-    const jwk = key.toJWK(false);
-    return JWT.sign({ data: true }, keyobject, "RS256")
+    const { keyObject: keyobject, jwk } = ks.get("RSA");
+    JWT.sign({ data: true, name: "RSA" }, keyobject, "RS256")
       .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
       .then((decoded) => {
-        expect(decoded.header).to.have.property("alg", "RS256");
-        expect(decoded.payload).to.contain({ data: true });
+        expect(decoded.header).toHaveProperty("alg", "RS256");
+        expect(decoded.payload).toHaveProperty("data", true);
+        expect(decoded.payload).toHaveProperty("name", "RSA");
       });
   });
 
   it("signs and validates with EC", () => {
-    const key = ks.get({ kty: "EC" });
-    const keyobject = key.keyObject;
-    const jwk = key.toJWK(false);
-    return JWT.sign({ data: true }, keyobject, "ES256")
+    const { keyObject: keyobject, jwk } = ks.get("EC");
+    JWT.sign({ data: true, name: "EC" }, keyobject, "ES256")
       .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
       .then((decoded) => {
-        expect(decoded.header).to.have.property("alg", "ES256");
-        expect(decoded.payload).to.contain({ data: true });
+        expect(decoded.header).toHaveProperty("alg", "ES256");
+        expect(decoded.payload).toHaveProperty("data", true);
+        expect(decoded.payload).toHaveProperty("name", "EC");
       });
   });
 
@@ -124,14 +127,14 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
       JWT.sign({ data: true }, null, "none")
         .then((jwt) => JWT.decode(jwt))
         .then((decoded) => {
-          expect(decoded.payload).to.have.property("iat");
+          expect(decoded.payload).toHaveProperty("iat");
         }));
 
     it("expiresIn", () =>
       JWT.sign({ data: true }, null, "none", { expiresIn: 60 })
         .then((jwt) => JWT.decode(jwt))
         .then((decoded) => {
-          expect(decoded.payload).to.have.property(
+          expect(decoded.payload).toHaveProperty(
             "exp",
             decoded.payload.iat + 60
           );
@@ -141,7 +144,7 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
       JWT.sign({ data: true }, null, "none", { audience: "clientId" })
         .then((jwt) => JWT.decode(jwt))
         .then((decoded) => {
-          expect(decoded.payload).to.have.property("aud", "clientId");
+          expect(decoded.payload).toHaveProperty("aud", "clientId");
         }));
 
     it("issuer", () =>
@@ -150,7 +153,7 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
       })
         .then((jwt) => JWT.decode(jwt))
         .then((decoded) => {
-          expect(decoded.payload).to.have.property(
+          expect(decoded.payload).toHaveProperty(
             "iss",
             "http://example.com/issuer"
           );
@@ -162,7 +165,7 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
       })
         .then((jwt) => JWT.decode(jwt))
         .then((decoded) => {
-          expect(decoded.payload).to.have.property(
+          expect(decoded.payload).toHaveProperty(
             "sub",
             "http://example.com/subject"
           );
@@ -171,34 +174,23 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
 
   describe("verify", () => {
     it("nbf", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
-        { data: true, nbf: unixTimestamp() + 3600 },
-        keyobject,
-        "HS256"
-      )
+      JWT.sign({ data: true, nbf: unixTimestamp() + 3600 }, keyobject, "HS256")
         .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
-        .then(
-          (valid) => {
-            expect(valid).not.to.be.ok;
-          },
-          (err) => {
-            expect(err).to.be.ok;
-            expect(err).to.be.an.instanceOf(InvalidJWT);
-            expect(err).to.have.property("message", "jwt not active yet");
-          }
-        );
+        .then(validated, (err) => {
+          expect(err).toBeTruthy();
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty("error_description", "jwt not active yet");
+          expect(validated).not.toHaveBeenCalled();
+        });
     });
 
     it("nbf ignored", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
+      JWT.sign(
         { data: true, nbf: unixTimestamp() + 3600 },
         keyobject,
         "HS256"
@@ -210,11 +202,9 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("nbf accepted within set clock tolerance", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
+      JWT.sign(
         { data: true, nbf: unixTimestamp() + 5 },
         keyobject,
         "HS256"
@@ -226,30 +216,24 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("nbf invalid", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true, nbf: "not a nbf" }, keyobject, "HS256")
+      JWT.sign({ data: true, nbf: "not a nbf" }, keyobject, "HS256")
         .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
-        .then(
-          (valid) => {
-            expect(valid).not.to.be.ok;
-          },
-          (err) => {
-            expect(err).to.be.ok;
-            expect(err).to.be.an.instanceOf(InvalidJWT);
-            expect(err).to.have.property("message", "invalid nbf value");
-          }
-        );
+        .then(validated, (err) => {
+          expect(err).toBeTruthy();
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty("error_description", "invalid nbf value");
+          expect(validated).not.toHaveBeenCalled();
+        });
     });
 
     it("iat", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
+      JWT.sign(
         { data: true, iat: unixTimestamp() + 3600 },
         keyobject,
         "HS256",
@@ -258,24 +242,21 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
         }
       )
         .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
-        .then(
-          (valid) => {
-            expect(valid).not.to.be.ok;
-          },
-          (err) => {
-            expect(err).to.be.ok;
-            expect(err).to.be.an.instanceOf(InvalidJWT);
-            expect(err).to.have.property("message", "jwt issued in the future");
-          }
-        );
+        .then(validated, (err) => {
+          expect(err).toBeTruthy;
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty(
+            "error_description",
+            "jwt issued in the future"
+          );
+          expect(validated).not.toHaveBeenCalled();
+        });
     });
 
     it("iat ignored", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
+      JWT.sign(
         { data: true, iat: unixTimestamp() + 3600 },
         keyobject,
         "HS256",
@@ -290,18 +271,11 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("iat accepted within set clock tolerance", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
-        { data: true, iat: unixTimestamp() + 5 },
-        keyobject,
-        "HS256",
-        {
-          noTimestamp: true,
-        }
-      ).then((jwt) =>
+      JWT.sign({ data: true, iat: unixTimestamp() + 5 }, keyobject, "HS256", {
+        noTimestamp: true,
+      }).then((jwt) =>
         JWT.verify(jwt, new KeyStore([jwk]), {
           clockTolerance: 10,
         })
@@ -309,55 +283,39 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("iat invalid", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true, iat: "not an iat" }, keyobject, "HS256", {
+      JWT.sign({ data: true, iat: "not an iat" }, keyobject, "HS256", {
         noTimestamp: true,
       })
         .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
-        .then(
-          (valid) => {
-            expect(valid).not.to.be.ok;
-          },
-          (err) => {
-            expect(err).to.be.ok;
-            expect(err).to.be.an.instanceOf(InvalidJWT);
-            expect(err).to.have.property("message", "invalid iat value");
-          }
-        );
+        .then(validated, (err) => {
+          expect(err).toBeTruthy();
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty("error_description", "invalid iat value");
+          expect(validated).not.toHaveBeenCalled();
+        });
     });
 
     it("exp", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
-        { data: true, exp: unixTimestamp() - 3600 },
-        keyobject,
-        "HS256"
-      )
+      JWT.sign({ data: true, exp: unixTimestamp() - 3600 }, keyobject, "HS256")
         .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
-        .then(
-          (valid) => {
-            expect(valid).not.to.be.ok;
-          },
-          (err) => {
-            expect(err).to.be.ok;
-            expect(err).to.be.an.instanceOf(InvalidJWT);
-            expect(err).to.have.property("message", "jwt expired");
-          }
-        );
+        .then(validated, (err) => {
+          expect(err).toBeTruthy();
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty("error_description", "jwt expired");
+          expect(validated).not.toHaveBeenCalled();
+        });
     });
 
     it("exp ignored", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
+      JWT.sign(
         { data: true, exp: unixTimestamp() - 3600 },
         keyobject,
         "HS256"
@@ -369,11 +327,9 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("exp accepted within set clock tolerance", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign(
+      JWT.sign(
         { data: true, exp: unixTimestamp() - 5 },
         keyobject,
         "HS256"
@@ -385,30 +341,23 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("exp invalid", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true, exp: "not an exp" }, keyobject, "HS256")
+      JWT.sign({ data: true, exp: "not an exp" }, keyobject, "HS256")
         .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
-        .then(
-          (valid) => {
-            expect(valid).not.to.be.ok;
-          },
-          (err) => {
-            expect(err).to.be.ok;
-            expect(err).to.be.an.instanceOf(InvalidJWT);
-            expect(err).to.have.property("message", "invalid exp value");
-          }
-        );
+        .then(validated, (err) => {
+          expect(err).toBeTruthy();
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty("error_description", "invalid exp value");
+          expect(validated).not.toHaveBeenCalled();
+        });
     });
 
     it("audience (single)", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true }, keyobject, "HS256", {
+      JWT.sign({ data: true }, keyobject, "HS256", {
         audience: "client",
       }).then((jwt) =>
         JWT.verify(jwt, new KeyStore([jwk]), {
@@ -418,11 +367,9 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("audience (multi)", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true }, keyobject, "HS256", {
+      JWT.sign({ data: true }, keyobject, "HS256", {
         audience: ["client", "momma"],
         authorizedParty: "client",
       }).then((jwt) =>
@@ -433,11 +380,10 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("audience (single) failed", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true }, keyobject, "HS256", {
+      JWT.sign({ data: true }, keyobject, "HS256", {
         audience: "client",
       })
         .then((jwt) =>
@@ -445,22 +391,23 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
             audience: "pappa",
           })
         )
-        .then((valid) => {
-          expect(valid).not.to.be.ok;
-        })
+        .then(validated)
         .catch((err) => {
-          expect(err).to.be.ok;
-          expect(err).to.be.an.instanceOf(InvalidJWT);
-          expect(err).to.have.property("message", "jwt audience missing pappa");
+          expect(err).toBeTruthy();
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty(
+            "error_description",
+            "jwt audience missing pappa"
+          );
+          expect(validated).not.toHaveBeenCalled();
         });
     });
 
     it("audience (multi) failed", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true }, keyobject, "HS256", {
+      JWT.sign({ data: true }, keyobject, "HS256", {
         audience: ["client", "momma"],
       })
         .then((jwt) =>
@@ -468,22 +415,22 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
             audience: "pappa",
           })
         )
-        .then((valid) => {
-          expect(valid).not.to.be.ok;
-        })
+        .then(validated)
         .catch((err) => {
-          expect(err).to.be.ok;
-          expect(err).to.be.an.instanceOf(InvalidJWT);
-          expect(err).to.have.property("message", "jwt audience missing pappa");
+          expect(err).toBeTruthy();
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty(
+            "error_description",
+            "jwt audience missing pappa"
+          );
+          expect(validated).not.toHaveBeenCalled();
         });
     });
 
     it("issuer", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true }, keyobject, "HS256", {
+      JWT.sign({ data: true }, keyobject, "HS256", {
         issuer: "me",
       }).then((jwt) =>
         JWT.verify(jwt, new KeyStore([jwk]), {
@@ -493,11 +440,10 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     });
 
     it("issuer failed", () => {
-      const key = ks.get({ kty: "oct" });
-      const keyobject = key.keyObject;
-      const jwk = key.toJWK(true);
+      const validated = jest.fn();
+      const { keyObject: keyobject, jwk } = ks.get("oct");
       delete jwk.kid;
-      return JWT.sign({ data: true }, keyobject, "HS256", {
+      JWT.sign({ data: true }, keyobject, "HS256", {
         issuer: "me",
       })
         .then((jwt) =>
@@ -505,15 +451,12 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
             issuer: "you",
           })
         )
-        .then((valid) => {
-          expect(valid).not.to.be.ok;
-        })
+        .then(validated)
         .catch((err) => {
-          expect(err).to.be.ok;
-          expect(err).to.be.an.instanceOf(InvalidJWT);
-          expect(err)
-            .to.have.property("message")
-            .that.matches(/jwt issuer invalid/);
+          expect(err).toBeTruthy();
+          expect(err).toBeInstanceOf(InvalidJWT);
+          expect(err).toHaveProperty("error_description", "jwt issuer invalid");
+          expect(validated).not.toHaveBeenCalled();
         });
     });
   });
