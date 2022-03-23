@@ -40,6 +40,11 @@ const generateOIDCCoreError = (
 
 module.exports = {
   OIDCCoreError,
+  InvalidArgument: generateOIDCCoreError(
+    "InvalidArgument",
+    snakeCase("InvalidArgument").toLocaleLowerCase(),
+    400
+  ),
   InvalidJWT: generateOIDCCoreError(
     "InvalidJWT",
     snakeCase("InvalidJWT").toLowerCase(),
@@ -245,5 +250,11 @@ module.exports = {
     snakeCase("UnsupportedResponseType").toLowerCase(),
     400,
     "unsupported response_type requested"
+  ),
+  InternalServerError: generateOIDCCoreError(
+    "InternalServerError",
+    snakeCase("InternalServerError").toLowerCase(),
+    500,
+    "internal server error"
   ),
 };

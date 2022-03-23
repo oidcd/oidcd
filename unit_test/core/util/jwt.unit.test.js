@@ -39,6 +39,7 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
 
   describe(".decode()", () => {
     it("doesnt decode non strings or non buffers", () => {
+      console.log(ks.get("RSA").jwk);
       expect(() => JWT.decode({})).toThrow(InvalidJWT);
     });
 

@@ -27,7 +27,7 @@
   "bugs": {
     "url": "https://github.com/leyusec/oidcd/issues"
   },
-  "homepage": "https://github.com/leyusec/oidcd#readme",
+  "homepage": "https://github.com/leyusec/oidcd",
   "devDependencies": {
     "eslint": "^7.30.0",
     "eslint-plugin-import": "^2.24.1",

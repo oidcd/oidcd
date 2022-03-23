@@ -36,7 +36,7 @@ class BearerToken {
    * Retrieve the value representation.
    */
 
-  valueOf() {
+  value() {
     var object = {
       access_token: this.accessToken,
       token_type: "Bearer",
