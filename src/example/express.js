@@ -13,7 +13,7 @@ const oidcdRouter = oidcd.use(
 
 app.use("/", oidcdRouter);
 
-app.listen(5379, function () {
+app.listen(5375, function () {
   console.info(
     "oidcd-express-example, %s, %s",
     app.get("port"),
