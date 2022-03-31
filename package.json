@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/leyusec/oidcd",
   "devDependencies": {
-    "eslint": "^7.30.0",
+    "eslint": "^8.12.0",
     "eslint-plugin-import": "^2.24.1",
     "eslint-plugin-node": "^11.1.0",
     "jest": "^27.0.6",

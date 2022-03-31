@@ -105,7 +105,7 @@ class Token {
         this.updateSuccessResponse(response, tokenType);
       })
       .catch(function (e) {
-        if (!(e instanceof OAuthError)) {
+        if (!(e instanceof InternalServerError)) {
           e = new InternalServerError(e);
         }
 

@@ -82,7 +82,21 @@ const DRAFTS = new Map(
   })
 );
 
+const RESPONSE = Object.freeze({
+  mode: {
+    query: "query",
+    fragment: "fragment",
+    formPost: "form_post",
+  },
+  type: {
+    code: "code",
+    token: "token",
+    idToken: "id_token",
+  },
+});
+
 module.exports = {
   DRAFTS,
   STABLE,
+  RESPONSE,
 };

@@ -1,4 +1,4 @@
-const { parseJwk } = require('jose/dist/node/cjs/jwk/parse');
+const { parseJwk } = require('jose/jwk/parse');
 
 const keyscore = (key, { alg, use }) => {
   let score = 0;

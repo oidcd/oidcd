@@ -1044,7 +1044,7 @@ function getDefaults() {
        * authentication flows as soon as possible. These views are not meant to ever be seen by actual
        * users.
        */
-      devInteractions: { enabled: true },
+      interactions: { enabled: true },
 
       /*
        * features.dPoP

@@ -8,6 +8,10 @@ class InteractionPolicy {
     this.Prompts = [];
   }
 
+  get data() {
+    return this.Prompts;
+  }
+
   get(name) {
     if (typeof name !== "string") {
       throw new TypeError("name must be a string");
@@ -20,7 +24,7 @@ class InteractionPolicy {
       throw new TypeError("name must be a string");
     }
     const i = this.Prompts.findIndex((p) => p.name === name);
-    this.splice(i, 1);
+    this.Prompts.splice(i, 1);
   }
 
   clear() {
@@ -33,7 +37,7 @@ class InteractionPolicy {
     if (!(prompt instanceof Prompt)) {
       throw new TypeError("argument must be an instance of Prompt");
     }
-    this.splice(i, 0, prompt);
+    this.Prompts.splice(i, 0, prompt);
   }
 }
 
