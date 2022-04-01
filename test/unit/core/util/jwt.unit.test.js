@@ -1,13 +1,14 @@
 const {
   generateKeyPair,
-} = require("jose/dist/node/cjs/util/generate_key_pair");
-const { generateSecret } = require("jose/dist/node/cjs/util/generate_secret");
-const { fromKeyLike } = require("jose/dist/node/cjs/jwk/from_key_like");
+  generateSecret,
+  importJWK,
+  exportJWK,
+} = require("jose");
 
-const { InvalidJWT } = require("../../../src/core/util/error");
-const JWT = require("../../../src/core/util/jwt");
-const unixTimestamp = require("../../../src/core/util/unix_timestamp");
-const KeyStore = require("../../../src/core/util/key_store");
+const { InvalidJWT } = require("../../../../src/core/util/error");
+const JWT = require("../../../../src/core/util/jwt");
+const unixTimestamp = require("../../../../src/core/util/unix_timestamp");
+const KeyStore = require("../../../../src/core/util/key_store");
 
 const ks = new Map();
 
@@ -23,23 +24,22 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
     // const okpKeyPair = await generateKeyPair("EdDSA", { crv: "Ed25519" });
     ks.set("oct", {
       keyObject: octKey,
-      jwk: await fromKeyLike(octKey),
+      jwk: await exportJWK(octKey),
     });
 
     ks.set("RSA", {
       keyObject: rsaKeyPair.privateKey,
-      jwk: await fromKeyLike(rsaKeyPair.privateKey),
+      jwk: await exportJWK(rsaKeyPair.privateKey),
     });
 
     ks.set("EC", {
       keyObject: ecKeyPair.privateKey,
-      jwk: await fromKeyLike(ecKeyPair.privateKey),
+      jwk: await exportJWK(ecKeyPair.privateKey),
     });
   });
 
   describe(".decode()", () => {
     it("doesnt decode non strings or non buffers", () => {
-      console.log(ks.get("RSA").jwk);
       expect(() => JWT.decode({})).toThrow(InvalidJWT);
     });
 
@@ -79,16 +79,16 @@ describe("JSON Web Token (JWT) RFC7519 implementation", () => {
       });
   });
 
-  it("signs and validates with oct", () => {
+  it("signs and validates with oct", async () => {
     const { keyObject: keyobject, jwk } = ks.get("oct");
     delete jwk.kid;
-    JWT.sign({ data: true }, keyobject, "HS256")
-      .then((jwt) => JWT.verify(jwt, new KeyStore([jwk])))
-      .then((decoded) => {
-        expect(decoded.header).not.toHaveProperty("kid");
-        expect(decoded.header).toHaveProperty("alg", "HS256");
-        expect(decoded.payload).toHaveProperty("data", true);
-      });
+    const decoded = await JWT.sign({ data: true }, keyobject, "HS256").then(
+      (jwt) => JWT.verify(jwt, new KeyStore([jwk]))
+    );
+
+    expect(decoded.header).not.toHaveProperty("kid");
+    expect(decoded.header).toHaveProperty("alg", "HS256");
+    expect(decoded.payload).toHaveProperty("data", true);
   });
 
   it("handles utf8 characters", () => {

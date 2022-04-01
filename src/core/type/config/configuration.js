@@ -706,12 +706,4 @@ class Configuration {
   }
 }
 
-(() => {
-  console.log("requierd");
-})();
-
-module.exports = {
-  Configuration: Configuration,
-  configuration: () => configuration,
-  Router: () => Router,
-};
+module.exports = Configuration;

@@ -1,4 +1,4 @@
-const unixTimestamp = require("../../../src/core/util/unix_timestamp");
+const unixTimestamp = require("../../../../src/core/util/unix_timestamp");
 
 /* eslint-env jest */
 

@@ -1,6 +1,6 @@
 const express = require("express");
-const oidcd = require("../oidcd");
-const { defaultInteractionPolicy } = require("../core/type/interaction/policy");
+const oidcd = require("../src/oidcd");
+const { defaultInteractionPolicy } = require("../src/core/type/interaction/policy");
 
 var app = express();
 

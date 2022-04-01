@@ -7,8 +7,8 @@
   },
   "main": "src/oidcd.js",
   "scripts": {
-    "preview": "node src/app_preview.js",
-    "test": "jest unit",
+    "example": "node example/express.js",
+    "test": "jest unit ./test",
     "prettier:check": "prettier --check ./{src,unit_test}/**/*.{js,json} --no-error-on-unmatched-pattern",
     "lint": "eslint src/** unit_test/** --no-error-on-unmatched-pattern"
   },
@@ -39,7 +39,7 @@
     "debug": "^4.3.2",
     "express": "^4.17.1",
     "express-validator": "^6.12.0",
-    "jose": "^3.14.0",
+    "jose": "^4.6.0",
     "lodash": "^4.17.21",
     "validator": "^13.6.0"
   }

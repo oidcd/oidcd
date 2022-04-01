@@ -1,7 +1,7 @@
 "use strict";
 // eslint-disable-next-line import/order
 const debug = require("./core/util/debug");
-const { Configuration } = require("./core/type/config/configuration");
+const Configuration = require("./core/type/config/configuration");
 
 module.exports = {
   use: (config, router) => {

@@ -1,5 +1,5 @@
-const { basicAuth } = require("../../../src/core/util/auth");
-const { InvalidArgument } = require("../../../src/core/util/error");
+const { basicAuth } = require("../../../../src/core/util/auth");
+const { InvalidArgument } = require("../../../../src/core/util/error");
 
 function request(authorization) {
   return {

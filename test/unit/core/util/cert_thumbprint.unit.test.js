@@ -1,7 +1,7 @@
 const {
   x5t,
   "x5t#S256": x5t256,
-} = require("../../../src/core/util/cert_thumbprint");
+} = require("../../../../src/core/util/cert_thumbprint");
 
 var cert = `-----BEGIN CERTIFICATE-----
 MIID8zCCAtugAwIBAgIUcxpB1Z8+AV52KHN3JMmr2xlc6EEwDQYJKoZIhvcNAQEL

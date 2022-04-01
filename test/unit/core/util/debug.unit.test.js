@@ -1,4 +1,4 @@
-const { warn, info, error } = require("../../../src/core/util/debug");
+const { warn, info, error } = require("../../../../src/core/util/debug");
 
 /* eslint-env jest */
 

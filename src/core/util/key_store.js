@@ -1,4 +1,4 @@
-const { parseJwk } = require('jose/jwk/parse');
+const { importJWK } = require('jose')
 
 const keyscore = (key, { alg, use }) => {
   let score = 0;
@@ -201,7 +201,7 @@ class KeyStore {
       return cached;
     }
 
-    const keyObject = await parseJwk({ ...jwk, alg });
+    const keyObject = await importJWK({ ...jwk, alg });
     this.cached.set(jwk, keyObject);
     return keyObject;
   }

@@ -1,4 +1,4 @@
-const error = require("../../../src/core/util/error");
+const error = require("../../../../src/core/util/error");
 
 /* eslint-env jest */
 

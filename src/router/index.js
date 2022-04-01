@@ -1,6 +1,6 @@
 "use strict";
 
-const { Configuration } = require("../core/type/config/configuration");
+const Configuration = require("../core/type/config/configuration");
 /*
 const {
   authorizationGet,

@@ -1,4 +1,4 @@
-const i18n = require("../../../src/core/util/i18n");
+const i18n = require("../../../../src/core/util/i18n");
 
 /* eslint-env jest */
 

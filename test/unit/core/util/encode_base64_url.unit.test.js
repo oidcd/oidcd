@@ -1,4 +1,4 @@
-const encodeBase64Url = require("../../../src/core/util/encode_base64_url");
+const encodeBase64Url = require("../../../../src/core/util/encode_base64_url");
 
 /* eslint-env jest */
 
