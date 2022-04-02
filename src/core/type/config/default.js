@@ -692,6 +692,7 @@ async function triggerAuthenticationDevice(ctx, request, account, client) {
 
 function getDefaults() {
   const defaults = {
+    issuer: 'http://127.0.0.1:8633/',
     /*
      * acrValues
      *

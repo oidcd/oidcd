@@ -4,7 +4,7 @@ const { defaultInteractionPolicy } = require("../src/core/type/interaction/polic
 
 var app = express();
 
-app.set("port", 5375);
+app.set("port", 8633);
 
 const oidcdRouter = oidcd.use(
   { interactions: { policy: defaultInteractionPolicy(), enabled: true } },
@@ -13,7 +13,7 @@ const oidcdRouter = oidcd.use(
 
 app.use("/", oidcdRouter);
 
-app.listen(5375, function () {
+app.listen(8633, function () {
   console.info(
     "oidcd-express-example, %s, %s",
     app.get("port"),

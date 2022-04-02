@@ -49,7 +49,9 @@ router.post(routes.token, () => {});
 router.get(routes.jwks, () => {});
 
 // discovery CORS open
-router.get("/.well-known/openid-configuration", () => {});
+router.get("/.well-known/openid-configuration", (req, res, next) => {
+  return res.json(Configuration.configuration.oidcdConfiguration());
+});
 
 // registeration
 if (features.registration.enabled) {

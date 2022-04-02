@@ -704,6 +704,55 @@ class Configuration {
       }
     }
   }
+
+  oidcdConfiguration() {
+    const {
+      issuer,
+      routes,
+      features,
+      features: { pushedAuthorizationRequests, requestObjects },
+    } = this;
+
+    const config = this;
+
+    const res = {
+      acr_values_supported: config.acrValues.size
+        ? [...config.acrValues]
+        : undefined,
+      authorization_endpoint: new URL(routes.authorization, issuer).href,
+      device_authorization_endpoint: features.deviceFlow.enabled
+        ? new URL(routes.device_authorization, issuer).href
+        : undefined,
+      claims_parameter_supported: features.claimsParameter.enabled,
+      claims_supported: [...config.claimsSupported],
+      code_challenge_methods_supported: config.pkce.methods,
+      end_session_endpoint: features.rpInitiatedLogout.enabled
+        ? new URL(routes.end_session, issuer).href
+        : undefined,
+      grant_types_supported: [...config.grantTypes],
+      id_token_signing_alg_values_supported: config.idTokenSigningAlgValues,
+      issuer: issuer,
+      jwks_uri: new URL(routes.jwks, issuer).href,
+      registration_endpoint: features.registration.enabled
+        ? new URL(routes.registration, issuer).href
+        : undefined,
+      authorization_response_iss_parameter_supported: features.issAuthResp
+        .enabled
+        ? true
+        : undefined,
+      response_modes_supported: ["form_post", "fragment", "query"],
+      response_types_supported: config.responseTypes,
+      scopes_supported: [...config.scopes],
+      subject_types_supported: [...config.subjectTypes],
+      token_endpoint_auth_methods_supported: [
+        ...config.tokenEndpointAuthMethods,
+      ],
+      token_endpoint_auth_signing_alg_values_supported:
+        config.tokenEndpointAuthSigningAlgValues,
+      token_endpoint: new URL(routes.token, issuer).href,
+    };
+    return res;
+  }
 }
 
 module.exports = Configuration;
